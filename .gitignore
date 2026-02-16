@@ -3,18 +3,18 @@
 **/.env
 
 # Docker runtime data
-**/gluetun/
-**/qbittorrent/
-**/nzbget/
-**/prowlarr/
-**/sonarr/
-**/radarr/
-**/lidarr/
-**/bazarr/
-**/ytdl-sub/
-**/jellyseerr/
-**/jellyfin/
-**/plex/
+# **/gluetun/
+# **/qbittorrent/
+# **/nzbget/
+# **/prowlarr/
+# **/sonarr/
+# **/radarr/
+# **/lidarr/
+# **/bazarr/
+# **/ytdl-sub/
+# **/jellyseerr/
+# **/jellyfin/
+# **/plex/
 
 # Data directories
 data/

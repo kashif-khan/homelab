@@ -15,8 +15,8 @@ services:
     devices:
      - /dev/dri:/dev/dri # QuickSync
     volumes:
-      - ./plex:/config
-      - /data:/data
+      - /mnt/media/configs/plex:/config
+      - /mnt/media:/mnt/media
     restart: unless-stopped
 
   overseerr:
@@ -27,8 +27,8 @@ services:
       - PGID=1000
       - TZ=America/Los_Angeles
     volumes:
-      - ./overseer/config:/config
-      - /data:/data
+      - /mnt/media/configs/overseerr:/config
+      - /mnt/media:/mnt/media
     ports:
       - 5055:5055
     restart: unless-stopped
@@ -41,7 +41,7 @@ services:
       - PGID=1000
       - TZ=America/Los_Angeles
     volumes:
-      - ./tautulli:/config
+      - /mnt/media/configs/tautulli:/config
     ports:
       - 8181:8181
     restart: unless-stopped

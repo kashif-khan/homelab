@@ -34,7 +34,7 @@ services:
       - 6789:6789 # nzbget
       - 9696:9696 # prowlarr
     volumes:
-      - ./gluetun:/gluetun
+      - /mnt/media/configs/gluetun:/gluetun
     # Environment variables can be set via Portainer's stack editor or using a .env file
     # env_file:
     #   - .env
@@ -58,8 +58,8 @@ services:
       - WEBUI_PORT=8080 # must match "qbittorrent web interface" port number in gluetun's service above
       # TORRENTING_PORT not set - PureVPN does not support automatic port forwarding like AirVPN
     volumes:
-      - ./qbittorrent:/config
-      - /data:/data
+      - /mnt/media/configs/qbittorrent:/config
+      - /mnt/media:/mnt/media
     depends_on:
       gluetun:
         condition: service_healthy
@@ -94,8 +94,8 @@ services:
       - TZ=${TZ}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./nzbget:/config
-      - /data:/data
+      - /mnt/media/configs/nzbget:/config
+      - /mnt/media:/mnt/media
     depends_on:
       gluetun:
         condition: service_healthy
@@ -112,7 +112,7 @@ services:
       - TZ=${TZ}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./prowlarr:/config
+      - /mnt/media/configs/prowlarr:/config
     restart: unless-stopped
     depends_on:
       gluetun:
@@ -130,8 +130,8 @@ services:
       - TZ=${TZ}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./sonarr:/config
-      - /data:/data
+      - /mnt/media/configs/sonarr:/config
+      - /mnt/media:/mnt/media
     ports:
       - 8989:8989
     networks:
@@ -148,8 +148,8 @@ services:
       - TZ=${TZ}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./radarr:/config
-      - /data:/data
+      - /mnt/media/configs/radarr:/config
+      - /mnt/media:/mnt/media
     ports:
       - 7878:7878
     networks:
@@ -162,8 +162,8 @@ services:
     restart: unless-stopped
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./lidarr:/config
-      - /data:/data
+      - /mnt/media/configs/lidarr:/config
+      - /mnt/media:/mnt/media
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -184,8 +184,8 @@ services:
       - TZ=${TZ}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./bazarr:/config
-      - /data:/data
+      - /mnt/media/configs/bazarr:/config
+      - /mnt/media:/mnt/media
     ports:
       - 6767:6767
     networks:
@@ -203,8 +203,8 @@ services:
 #      - TZ=${TZ}
 #      - DOCKER_MODS=linuxserver/mods:universal-cron
 #    volumes:
-#      - ./ytdl-sub:/config
-#      - /data/youtube:/youtube
+#      - /mnt/media/configs/ytdl-sub:/config
+#      - /mnt/media/youtube:/youtube
 #    networks:
 #      servarrnetwork:
 #        ipv4_address: 172.39.0.8
@@ -218,7 +218,7 @@ services:
 #      - PGID=${PGID}
 #      - TZ=${TZ}
 #    volumes:
-#      - ./jellyseerr:/app/config
+#      - /mnt/media/configs/jellyseerr:/app/config
 #    ports:
 #      - 5055:5055
 #    networks:
