@@ -42,6 +42,7 @@ services:
       - OPENVPN_USER=${OPENVPN_USER}
       - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
       - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - HEALTH_VPN_DURATION_INITIAL=${HEALTH_VPN_DURATION_INITIAL}
     healthcheck:
       test: ping -c 1 www.google.com || exit 1
       interval: 20s
