@@ -29,15 +29,15 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.2
     ports:
-      - 8080:8080 # qbittorrent web interface
+      - 8081:8080 # qbittorrent web interface
       - 6881:6881 # qbittorrent torrent port
       - 6789:6789 # nzbget
       - 9696:9696 # prowlarr
     volumes:
       - ./gluetun:/gluetun
-    # Make a '.env' file in the same directory.
-    env_file:
-      - .env
+    # Environment variables can be set via Portainer's stack editor or using a .env file
+    # env_file:
+    #   - .env
     healthcheck:
       test: ping -c 1 www.google.com || exit 1
       interval: 20s
