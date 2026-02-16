@@ -49,6 +49,39 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/gluetun.png
+    x-casaos:
+      envs:
+        - container: TZ
+          description:
+            en_us: "Timezone"
+        - container: VPN_SERVICE_PROVIDER
+          description:
+            en_us: "VPN Service Provider"
+        - container: VPN_TYPE
+          description:
+            en_us: "VPN Type (openvpn/wireguard)"
+        - container: SERVER_COUNTRIES
+          description:
+            en_us: "VPN Server Countries"
+      ports:
+        - container: "8080"
+          description:
+            en_us: "Gluetun Control Server (qBittorrent WebUI via VPN)"
+        - container: "6881"
+          description:
+            en_us: "qBittorrent torrent port"
+        - container: "6789"
+          description:
+            en_us: "NZBGet WebUI"
+        - container: "9696"
+          description:
+            en_us: "Prowlarr WebUI"
+      volumes:
+        - container: /gluetun
+          description:
+            en_us: "Gluetun configuration directory"
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -76,6 +109,27 @@ services:
       retries: 3
       start_period: 20s
       timeout: 10s
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+        - container: WEBUI_PORT
+          description:
+            en_us: "WebUI Port"
+      volumes:
+        - container: /config
+          description:
+            en_us: "qBittorrent configuration directory"
+        - container: /mnt/media
+          description:
+            en_us: "Media storage directory"
 
   # See the 'qBittorrent Stalls with VPN Timeout' section for more information.
   deunhealth:
@@ -89,6 +143,20 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/docker.png
+    x-casaos:
+      envs:
+        - container: LOG_LEVEL
+          description:
+            en_us: "Log Level"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      volumes:
+        - container: /var/run/docker.sock
+          description:
+            en_us: "Docker socket for container health monitoring"
 
   nzbget:
     image: lscr.io/linuxserver/nzbget:latest
@@ -107,6 +175,26 @@ services:
         restart: true
     restart: unless-stopped
     network_mode: service:gluetun
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nzbget.png
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      volumes:
+        - container: /config
+          description:
+            en_us: "NZBGet configuration directory"
+        - container: /mnt/media
+          description:
+            en_us: "Media storage directory"
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -124,6 +212,23 @@ services:
         condition: service_healthy
         restart: true
     network_mode: service:gluetun
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/prowlarr.png
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      volumes:
+        - container: /config
+          description:
+            en_us: "Prowlarr configuration directory"
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -142,6 +247,30 @@ services:
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.3
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sonarr.png
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      ports:
+        - container: "8989"
+          description:
+            en_us: "Sonarr WebUI"
+      volumes:
+        - container: /config
+          description:
+            en_us: "Sonarr configuration directory"
+        - container: /mnt/media
+          description:
+            en_us: "Media storage directory"
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
@@ -160,6 +289,30 @@ services:
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.4
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/radarr.png
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      ports:
+        - container: "7878"
+          description:
+            en_us: "Radarr WebUI"
+      volumes:
+        - container: /config
+          description:
+            en_us: "Radarr configuration directory"
+        - container: /mnt/media
+          description:
+            en_us: "Media storage directory"
 
   lidarr:
     container_name: lidarr
@@ -178,6 +331,30 @@ services:
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.5
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/lidarr.png
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      ports:
+        - container: "8686"
+          description:
+            en_us: "Lidarr WebUI"
+      volumes:
+        - container: /config
+          description:
+            en_us: "Lidarr configuration directory"
+        - container: /mnt/media
+          description:
+            en_us: "Media storage directory"
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
@@ -196,6 +373,30 @@ services:
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.6
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/bazarr.png
+    x-casaos:
+      envs:
+        - container: PUID
+          description:
+            en_us: "User ID"
+        - container: PGID
+          description:
+            en_us: "Group ID"
+        - container: TZ
+          description:
+            en_us: "Timezone"
+      ports:
+        - container: "6767"
+          description:
+            en_us: "Bazarr WebUI"
+      volumes:
+        - container: /config
+          description:
+            en_us: "Bazarr configuration directory"
+        - container: /mnt/media
+          description:
+            en_us: "Media storage directory"
 
 # Newer additions to this stack feel. Remove the '#' to add the service.
 #
