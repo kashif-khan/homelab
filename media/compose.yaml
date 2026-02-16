@@ -35,9 +35,12 @@ services:
       - 9696:9696 # prowlarr
     volumes:
       - /mnt/media/configs/gluetun:/gluetun
-    # Environment variables can be set via Portainer's stack editor or using a .env file
-    env_file:
-      - stack.env
+    environment:
+      - TZ=${TZ}
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
     healthcheck:
       test: ping -c 1 www.google.com || exit 1
       interval: 20s
