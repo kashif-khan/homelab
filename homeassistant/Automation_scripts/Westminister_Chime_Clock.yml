@@ -1,0 +1,83 @@
+alias: Westminister Chime Clock
+description: >
+  Plays Westminister chimes every 15 minutes: - 15 min: First quarter melody - 30
+  min: Second quarter melody - 45 min: Third quarter melody - On the hour: Full
+  melody followed by hour strikes (1–12) Active only between 07:00 and 22:00
+  (silent at night). Audio files are served from
+  /config/www/sounds/westminister/.
+triggers:
+  - minutes: /15
+    trigger: time_pattern
+conditions:
+  - condition: time
+    after: "07:00:00"
+    before: "22:00:00"
+actions:
+  - variables:
+      m: "{{ now().minute }}"
+      h24: "{{ now().hour }}"
+      h12: "{{ ((h24 - 1) % 12) + 1 }}"
+      base: /local/sounds/westminister
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ m == 15 }}"
+        sequence:
+          - target:
+              entity_id: media_player.family_room_speaker
+            data:
+              media:
+                media_content_id: "{{ base }}/westminister_q1.mp3"
+                media_content_type: audio/mpeg
+                metadata: {}
+            action: media_player.play_media
+      - conditions:
+          - condition: template
+            value_template: "{{ m == 30 }}"
+        sequence:
+          - target:
+              entity_id: media_player.family_room_speaker
+            data:
+              media:
+                media_content_id: "{{ base }}/westminister_q2.mp3"
+                media_content_type: audio/mpeg
+                metadata: {}
+            action: media_player.play_media
+      - conditions:
+          - condition: template
+            value_template: "{{ m == 45 }}"
+        sequence:
+          - target:
+              entity_id: media_player.family_room_speaker
+            data:
+              media:
+                media_content_id: "{{ base }}/westminister_q3.mp3"
+                media_content_type: audio/mpeg
+                metadata: {}
+            action: media_player.play_media
+      - conditions:
+          - condition: template
+            value_template: "{{ m == 0 }}"
+        sequence:
+          - target:
+              entity_id: media_player.family_room_speaker
+            data:
+              media:
+                media_content_id: "{{ base }}/westminister_q4.mp3"
+                media_content_type: audio/mpeg
+                metadata: {}
+            action: media_player.play_media
+          - delay: "00:00:05"
+          - repeat:
+              count: "{{ h12 }}"
+              sequence:
+                - target:
+                    entity_id: media_player.family_room_speaker
+                  data:
+                    media:
+                      media_content_id: "{{ base }}/strike.mp3"
+                      media_content_type: audio/mpeg
+                      metadata: {}
+                  action: media_player.play_media
+                - delay: "00:00:03"
+mode: single
