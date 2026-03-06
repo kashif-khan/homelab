@@ -29,7 +29,7 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.2
     ports:
-      - 8083:8080 # qbittorrent web interface
+      - 8083:8083 # qbittorrent web interface
       - 6881:6881 # qbittorrent torrent port
       - 6789:6789 # nzbget
       - 9696:9696 # prowlarr
@@ -66,7 +66,7 @@ services:
           description:
             en_us: "VPN Server Countries"
       ports:
-        - container: "8080"
+        - container: "8083"
           description:
             en_us: "Gluetun Control Server (qBittorrent WebUI via VPN)"
         - container: "6881"
@@ -93,7 +93,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - WEBUI_PORT=8080 # must match "qbittorrent web interface" port number in gluetun's service above
+      - WEBUI_PORT=8083 # must match "qbittorrent web interface" port number in gluetun's service above
       # TORRENTING_PORT not set - PureVPN does not support automatic port forwarding like AirVPN
     volumes:
       - /mnt/media/configs/qbittorrent:/config
