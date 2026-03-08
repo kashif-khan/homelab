@@ -41,6 +41,61 @@ Make sure to review everything here and if you have any issues please submit it 
 * [Storage](https://github.com/TechHutTV/homelab/tree/main/storage)
 * [Proxy Management](https://github.com/TechHutTV/homelab/tree/main/proxy)
 
+## Application Overview
+
+### Application Hierarchy
+
+```
+media/
+├── compose.yaml                  — *arr stack + VPN
+│   ├── gluetun                   — VPN gateway (all tunneled traffic goes through here)
+│   │   ├── qbittorrent           — Torrent download client       (port via Gluetun)
+│   │   ├── nzbget                — Usenet download client        (port via Gluetun)
+│   │   └── prowlarr              — Indexer manager               (port via Gluetun)
+│   ├── sonarr                    — TV series manager
+│   ├── radarr                    — Movie manager
+│   ├── lidarr                    — Music manager
+│   ├── bazarr                    — Subtitle manager
+│   └── deunhealth                — Container health watchdog (no ports)
+│
+└── jellyfin/compose.yaml         — Media server stack
+    ├── jellyfin                  — Media streaming server
+    ├── jellyseerr                — Media request manager
+    ├── jellystat                 — Jellyfin statistics dashboard
+    └── jellystat-db              — PostgreSQL database for Jellystat (internal only)
+```
+
+### Ports Reference
+
+All host ports are configurable via the `.env` file. Container-side ports are fixed by the application and should not be changed.
+
+#### `media/compose.yaml` — *arr stack
+
+| Service | `.env` Variable | Default Port | Purpose |
+| --- | --- | --- | --- |
+| gluetun → qbittorrent | `QBITTORRENT_PORT` | `8083` | qBittorrent web UI (routed via Gluetun VPN) |
+| gluetun → qbittorrent | `QBITTORRENT_TORRENT_PORT` | `6881` | Torrent traffic TCP/UDP (routed via Gluetun VPN) |
+| gluetun → nzbget | `NZBGET_PORT` | `6789` | NZBGet web UI (routed via Gluetun VPN) |
+| gluetun → prowlarr | `PROWLARR_PORT` | `9696` | Prowlarr web UI (routed via Gluetun VPN) |
+| sonarr | `SONARR_PORT` | `8989` | Sonarr web UI |
+| radarr | `RADARR_PORT` | `7878` | Radarr web UI |
+| lidarr | `LIDARR_PORT` | `8686` | Lidarr web UI |
+| bazarr | `BAZARR_PORT` | `6767` | Bazarr web UI |
+
+> [!NOTE]
+> qBittorrent, NZBGet, and Prowlarr run with `network_mode: service:gluetun` — their ports are exposed through the Gluetun container, not directly.
+
+#### `jellyfin/compose.yaml` — Media server stack
+
+| Service | `.env` Variable | Default Port | Purpose |
+| --- | --- | --- | --- |
+| jellyfin | `JELLYFIN_PORT` | `8096` | Jellyfin web UI |
+| jellyfin | `JELLYFIN_DISCOVERY_UDP` | `7359` | Service discovery (UDP) |
+| jellyfin | `JELLYFIN_DLNA_UDP` | `1900` | DLNA/client discovery (UDP) |
+| jellyseerr | `JELLYSEERR_PORT` | `5055` | Jellyseerr web UI |
+| jellystat | `JELLYSTAT_PORT` | `3000` | Jellystat web UI |
+| jellystat-db | — | internal | PostgreSQL (not exposed to host) |
+
 ## Companion Video
 ```
 # Updated video coming soon
