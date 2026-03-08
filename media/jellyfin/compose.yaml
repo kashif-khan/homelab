@@ -6,16 +6,16 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - JELLYFIN_PublishedServerUrl=${JELLYFIN_PUBLISHED_SERVER_URL} #optional
+      - JELLYFIN_PublishedServerUrl=http://${HOST_IP} #optional
     volumes:
       - ${CONFIG_BASE}/jellyfin:/config
       - ${MEDIA_PATH}:/mnt/media
     devices:
       - /dev/dri:/dev/dri #Use for Intel QuickSync
     ports:
-      - ${JELLYFIN_PORT}:8096
-      - ${JELLYFIN_DISCOVERY_UDP}:7359/udp #Service Discovery
-      - ${JELLYFIN_DLNA_UDP}:1900/udp #Client Discovery
+      - ${HOST_IP}:${JELLYFIN_PORT}:8096
+      - ${HOST_IP}:${JELLYFIN_DISCOVERY_UDP}:7359/udp #Service Discovery
+      - ${HOST_IP}:${JELLYFIN_DLNA_UDP}:1900/udp #Client Discovery
     restart: unless-stopped
 # Remove the Jellyfin service if installed directly on system.
 
@@ -29,7 +29,7 @@ services:
     volumes:
       - ${CONFIG_BASE}/jellyseerr:/app/config
     ports:
-      - ${JELLYSEERR_PORT}:5055
+      - ${HOST_IP}:${JELLYSEERR_PORT}:5055
     restart: unless-stopped
 
   jellystat-db:
@@ -56,7 +56,7 @@ services:
     volumes:
       - ${CONFIG_BASE}/jellystat/backup-data:/app/backend/backup-data
     ports:
-      - ${JELLYSTAT_PORT}:3000
+      - ${HOST_IP}:${JELLYSTAT_PORT}:3000
     depends_on:
       - jellystat-db
 

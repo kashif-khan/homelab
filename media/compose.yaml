@@ -29,10 +29,10 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.2
     ports:
-      - ${QBITTORRENT_PORT}:8083 # qbittorrent web interface
-      - ${QBITTORRENT_TORRENT_PORT}:6881 # qbittorrent torrent port
-      - ${NZBGET_PORT}:6789 # nzbget
-      - ${PROWLARR_PORT}:9696 # prowlarr
+      - ${HOST_IP}:${QBITTORRENT_PORT}:8083 # qbittorrent web interface
+      - ${HOST_IP}:${QBITTORRENT_TORRENT_PORT}:6881 # qbittorrent torrent port
+      - ${HOST_IP}:${NZBGET_PORT}:6789 # nzbget
+      - ${HOST_IP}:${PROWLARR_PORT}:9696 # prowlarr
     volumes:
       - /mnt/media/configs/gluetun:/gluetun
     environment:
@@ -243,7 +243,7 @@ services:
       - /mnt/media/configs/sonarr:/config
       - /mnt/media:/mnt/media
     ports:
-      - ${SONARR_PORT}:8989
+      - ${HOST_IP}:${SONARR_PORT}:8989
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.3
@@ -285,7 +285,7 @@ services:
       - /mnt/media/configs/radarr:/config
       - /mnt/media:/mnt/media
     ports:
-      - ${RADARR_PORT}:7878
+      - ${HOST_IP}:${RADARR_PORT}:7878
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.4
@@ -327,7 +327,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     ports:
-      - ${LIDARR_PORT}:8686
+      - ${HOST_IP}:${LIDARR_PORT}:8686
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.5
@@ -369,7 +369,7 @@ services:
       - /mnt/media/configs/bazarr:/config
       - /mnt/media:/mnt/media
     ports:
-      - ${BAZARR_PORT}:6767
+      - ${HOST_IP}:${BAZARR_PORT}:6767
     networks:
       servarrnetwork:
         ipv4_address: 172.39.0.6
