@@ -16,7 +16,7 @@ services:
       - ${HOST_IP}:${JELLYFIN_PORT}:8096
       - ${HOST_IP}:${JELLYFIN_DISCOVERY_UDP}:7359/udp #Service Discovery
       - ${HOST_IP}:${JELLYFIN_DLNA_UDP}:1900/udp #Client Discovery
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
 # Remove the Jellyfin service if installed directly on system.
 
   jellyseerr:
@@ -30,12 +30,12 @@ services:
       - ${CONFIG_BASE}/jellyseerr:/app/config
     ports:
       - ${HOST_IP}:${JELLYSEERR_PORT}:5055
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
 
   jellystat-db:
     image: postgres:15.2
     container_name: jellystat-db
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     environment:
       POSTGRES_USER: ${JELLYSTAT_POSTGRES_USER}
       POSTGRES_PASSWORD: ${JELLYSTAT_POSTGRES_PASSWORD}
@@ -45,7 +45,7 @@ services:
   jellystat:
     image: cyfershepard/jellystat:latest
     container_name: jellystat
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     environment:
       POSTGRES_USER: ${JELLYSTAT_POSTGRES_USER}
       POSTGRES_PASSWORD: ${JELLYSTAT_POSTGRES_PASSWORD}

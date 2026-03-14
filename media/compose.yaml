@@ -48,7 +48,8 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-    restart: unless-stopped
+      start_period: 30s
+    restart: "on-failure:${RESTART_MAX_RETRIES:-10}"
     labels:
       icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/gluetun.png
     x-casaos:
@@ -174,7 +175,7 @@ services:
       gluetun:
         condition: service_healthy
         restart: true
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     network_mode: service:gluetun
     labels:
       icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nzbget.png
@@ -207,7 +208,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${CONFIG_DIR}/prowlarr:/config
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     depends_on:
       gluetun:
         condition: service_healthy
@@ -234,7 +235,7 @@ services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -276,7 +277,7 @@ services:
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -318,7 +319,7 @@ services:
   lidarr:
     container_name: lidarr
     image: lscr.io/linuxserver/lidarr:latest
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${CONFIG_DIR}/lidarr:/config
@@ -360,7 +361,7 @@ services:
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
-    restart: unless-stopped
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
