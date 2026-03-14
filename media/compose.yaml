@@ -94,9 +94,8 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
       - WEBUI_PORT=${QBITTORRENT_PORT} # must match "qbittorrent web interface" port number in gluetun's service above
-      - WEBUI_USERNAME=${QBITTORRENT_USERNAME}
-      - WEBUI_PASSWORD=${QBITTORRENT_PASSWORD}
       # TORRENTING_PORT not set - PureVPN does not support automatic port forwarding like AirVPN
+      # NOTE: username/password must be set via the WebUI after first launch (Tools > Options > Web UI)
     volumes:
       - ${CONFIG_DIR}/qbittorrent:/config
       - ${MEDIA_DIR}:${MEDIA_DIR}
