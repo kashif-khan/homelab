@@ -1,3 +1,29 @@
+# Nginx Proxy Manager — HTTPS reverse proxy for all homelab services
+#
+# LAN HTTPS setup (*.home.arpa or your LAN_TLD):
+#   1. Set LAN_TLD in .env (copy from .env.example).
+#   2. In your router or Pi-hole, add a wildcard DNS A record:
+#        *.${LAN_TLD}  →  ${HOST_IP}
+#   3. In NPM (http://${HOST_IP}:81), create proxy hosts:
+#
+#   --- media/compose.yaml ---
+#   qbittorrent.${LAN_TLD}  → http://${HOST_IP}:${QBITTORRENT_PORT}   (8083)
+#   nzbget.${LAN_TLD}       → http://${HOST_IP}:${NZBGET_PORT}         (6789)
+#   prowlarr.${LAN_TLD}     → http://${HOST_IP}:${PROWLARR_PORT}       (9696)
+#   sonarr.${LAN_TLD}       → http://${HOST_IP}:${SONARR_PORT}         (8989)
+#   radarr.${LAN_TLD}       → http://${HOST_IP}:${RADARR_PORT}         (7878)
+#   lidarr.${LAN_TLD}       → http://${HOST_IP}:${LIDARR_PORT}         (8686)
+#   bazarr.${LAN_TLD}       → http://${HOST_IP}:${BAZARR_PORT}         (6767)
+#
+#   --- media/jellyfin/compose.yaml ---
+#   jellyfin.${LAN_TLD}     → http://${HOST_IP}:${JELLYFIN_PORT}       (8096)
+#   jellyseerr.${LAN_TLD}   → http://${HOST_IP}:${JELLYSEERR_PORT}     (5055)
+#   jellystat.${LAN_TLD}    → http://${HOST_IP}:${JELLYSTAT_PORT}      (3000)
+#
+#   4. For SSL: use NPM's built-in Let's Encrypt (public domain) or generate a
+#      local self-signed / custom CA cert for your LAN_TLD wildcard.
+#      A local CA is recommended for purely internal *.home.arpa domains.
+
 services:
   proxy:
     image: 'jc21/nginx-proxy-manager:latest'
@@ -5,52 +31,56 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - data:/data
-      - letsencrypt:/etc/letsencrypt
+      - ${CONFIG_DIR}/nginx-proxy-manager/data:/data
+      - ${CONFIG_DIR}/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
     healthcheck:
       test: ["CMD", "/usr/bin/check-health"]
       interval: 10s
       timeout: 3s
 
-  ddns:
-    image: favonia/cloudflare-ddns:latest
-    container_name: cloudflare-ddns
-    # network_mode: host # This bypasses network isolation and makes IPv6 easier (optional; see below)
-    restart: unless-stopped
-    user: "1000:1000" # Run the updater with specific user and group IDs (in that order).
-    read_only: true # Make the container filesystem read-only (optional but recommended)
-    cap_drop: [all] # Drop all Linux capabilities (optional but recommended)
-    security_opt: [no-new-privileges:true] # Another protection to restrict superuser privileges (optional but recommended)
-    environment:
-      - CLOUDFLARE_API_TOKEN=KEY
-      - DOMAINS=example.com,jellyfin.example.com
-      - PROXIED=true
-      - IP6_PROVIDER=none
+# [OPTIONAL] Cloudflare DDNS — only needed for public internet access via a real domain.
+# Remove the '#' from each line below to enable. Set vars in .env.
+#  ddns:
+#    image: favonia/cloudflare-ddns:latest
+#    container_name: cloudflare-ddns
+#    # network_mode: host # This bypasses network isolation and makes IPv6 easier (optional; see below)
+#    restart: unless-stopped
+#    user: "1000:1000"
+#    read_only: true
+#    cap_drop: [all]
+#    security_opt: [no-new-privileges:true]
+#    environment:
+#      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+#      - DOMAINS=${DDNS_DOMAINS}
+#      - PROXIED=${DDNS_PROXIED:-true}
+#      - IP6_PROVIDER=none
 
-  netbird:
-    container_name: netbird
-    hostname: proxy-stack
-    cap_add:
-        - NET_ADMIN
-        - SYS_ADMIN
-        - SYS_RESOURCE
-    network_mode: host
-    environment:
-        - NB_SETUP_KEY=key
-    volumes:
-        - netbird-client:/var/lib/netbird
-    image: netbirdio/netbird:latest
+# [OPTIONAL] NetBird — VPN mesh for remote access to LAN services from outside the network.
+# Remove the '#' from each line below to enable. Set NB_SETUP_KEY in .env.
+#  netbird:
+#    container_name: netbird
+#    hostname: proxy-stack
+#    cap_add:
+#        - NET_ADMIN
+#        - SYS_ADMIN
+#        - SYS_RESOURCE
+#    network_mode: host
+#    environment:
+#        - NB_SETUP_KEY=${NB_SETUP_KEY}
+#    volumes:
+#        - netbird-client:/var/lib/netbird
+#    image: netbirdio/netbird:latest
 
-# For testing the proxy
-  helloworld:
-    image: 'karthequian/helloworld:latest'
-    container_name: helloworld
-    restart: unless-stopped
-    ports:
-      - 8888:80/tcp
-      
-volumes:
-  data:
-  letsencrypt:
-  netbird-client:
-      name: netbird-client
+# [OPTIONAL] Helloworld — test container to verify the proxy is working before adding real services.
+# Remove the '#' from each line below to enable.
+#  helloworld:
+#    image: 'karthequian/helloworld:latest'
+#    container_name: helloworld
+#    restart: unless-stopped
+#    ports:
+#      - 8888:80/tcp
+
+# Uncomment if using NetBird:
+#volumes:
+#  netbird-client:
+#      name: netbird-client
