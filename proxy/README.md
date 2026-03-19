@@ -29,42 +29,83 @@ Optional services are commented out. Uncomment and set the relevant `.env` vars 
 
 Copy `.env.example` to `.env` and set at minimum:
 
-```
+```ini
 HOST_IP=10.0.0.x       # LAN IP of this machine
 CONFIG_DIR=/mnt/media/configs
-LAN_TLD=home.arpa      # your chosen local domain
+LAN_TLD=lan            # must match Pi-hole domain name setting
 ```
 
 ### 2. Start NPM
 
-```
+```bash
 docker compose up -d proxy
 ```
 
-NPM admin UI: `http://HOST_IP:81` — default login `admin@example.com` / `changeme`.
+NPM admin UI: `http://HOST_IP:NPM_ADMIN_PORT` (default `8181`) — default login `admin@example.com` / `changeme`.
 
-### 3. LAN HTTPS (local-only, no public domain needed)
+### 3. LAN HTTPS with Pi-hole (local-only, no public domain needed)
 
-1. In your router or Pi-hole, add a wildcard DNS A record: `*.home.arpa → HOST_IP`
-2. Generate a wildcard SSL certificate — see [SSL Certificate Options](#ssl-certificate-options) below.
-3. In NPM _Hosts > Proxy Hosts_, create an entry for each service:
+Pi-hole handles DNS (resolving `jellyfin.lan` → `HOST_IP`) and NPM handles routing (forwarding the request to the right container). You need both.
+
+```text
+Browser → Pi-hole (DNS lookup) → NPM (routes by hostname) → Container
+```
+
+#### 3a. Pi-hole DNS setup
+
+In Pi-hole _Local DNS → DNS Records_, add one A record for the host:
+
+```text
+homelab.lan  →  HOST_IP
+```
+
+In Pi-hole _Local DNS → CNAME Records_, add one entry per service pointing to that A record:
+
+```text
+jellyfin.lan     →  homelab.lan
+sonarr.lan       →  homelab.lan
+radarr.lan       →  homelab.lan
+lidarr.lan       →  homelab.lan
+bazarr.lan       →  homelab.lan
+prowlarr.lan     →  homelab.lan
+qbittorrent.lan  →  homelab.lan
+nzbget.lan       →  homelab.lan
+jellyseerr.lan   →  homelab.lan
+jellystat.lan    →  homelab.lan
+```
+
+Set your router's DNS server to Pi-hole's IP so all devices use it.
+
+> __LAN_TLD:__ set `LAN_TLD=lan` in `.env` to match Pi-hole's domain setting (_Settings → DNS → Pi-hole domain name_).
+
+#### 3b. NPM proxy hosts
+
+NPM receives all requests at `HOST_IP` and routes them to the right container by hostname. The `npm-init` service in `compose.yaml` creates these automatically — start it alongside NPM:
+
+```bash
+docker compose up -d proxy npm-init
+```
+
+Or create them manually in NPM _Hosts → Proxy Hosts_:
 
 | Proxy host | Forward to |
 | --- | --- |
-| `sonarr.home.arpa` | `http://HOST_IP:8989` |
-| `radarr.home.arpa` | `http://HOST_IP:7878` |
-| `lidarr.home.arpa` | `http://HOST_IP:8686` |
-| `bazarr.home.arpa` | `http://HOST_IP:6767` |
-| `prowlarr.home.arpa` | `http://HOST_IP:9696` |
-| `qbittorrent.home.arpa` | `http://HOST_IP:8083` |
-| `nzbget.home.arpa` | `http://HOST_IP:6789` |
-| `jellyfin.home.arpa` | `http://HOST_IP:8096` |
-| `jellyseerr.home.arpa` | `http://HOST_IP:5055` |
-| `jellystat.home.arpa` | `http://HOST_IP:3000` |
+| `sonarr.lan` | `http://HOST_IP:8989` |
+| `radarr.lan` | `http://HOST_IP:7878` |
+| `lidarr.lan` | `http://HOST_IP:8686` |
+| `bazarr.lan` | `http://HOST_IP:6767` |
+| `prowlarr.lan` | `http://HOST_IP:9696` |
+| `qbittorrent.lan` | `http://HOST_IP:8083` |
+| `nzbget.lan` | `http://HOST_IP:6789` |
+| `jellyfin.lan` | `http://HOST_IP:8096` |
+| `jellyseerr.lan` | `http://HOST_IP:5055` |
+| `jellystat.lan` | `http://HOST_IP:3000` |
 
-On the SSL tab of each host, select the `*.home.arpa` certificate and enable _Force SSL_.
+#### 3c. SSL certificate
 
-> __Jellyfin note:__ add the NPM host IP as an approved proxy in Jellyfin _Dashboard > Networking_. See [Jellyfin nginx docs](https://jellyfin.org/docs/general/networking/nginx/#nginx-proxy-manager) for any advanced config needed in the proxy host's Advanced tab.
+Generate a wildcard cert for `*.lan` — see [SSL Certificate Options](#ssl-certificate-options) below — then on the SSL tab of each proxy host select it and enable _Force SSL_.
+
+> __Jellyfin note:__ add `HOST_IP` as an approved proxy in Jellyfin _Dashboard → Networking_. See [Jellyfin nginx docs](https://jellyfin.org/docs/general/networking/nginx/#nginx-proxy-manager) for advanced config needed in the proxy host's Advanced tab.
 
 ### SSL Certificate Options
 
@@ -135,12 +176,13 @@ NetBird creates a zero-trust VPN mesh so you can reach LAN services from anywher
 
 1. [Create a NetBird account](https://app.netbird.io) or self-host, then generate a setup key.
 2. Set `NB_SETUP_KEY` in `.env` and uncomment the `netbird` service and its volume in `compose.yaml`.
-3. In the NetBird dashboard, create a network resource pointing to `HOST_IP` with `*.home.arpa` (or your `LAN_TLD`) as an alias.
+3. In the NetBird dashboard, create a network resource pointing to `HOST_IP` with `*.lan` (or your `LAN_TLD`) as an alias.
 
 Once connected via the NetBird client on any device, your local proxy hosts are accessible as if you were on the LAN.
 
 For installation on Linux (outside Docker):
-```
+
+```bash
 curl -fsSL https://pkgs.netbird.io/install.sh | sh
 netbird up --setup-key <SETUP KEY>
 ```
