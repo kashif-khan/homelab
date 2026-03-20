@@ -51,7 +51,7 @@ services:
       start_period: 30s
     restart: "on-failure:${RESTART_MAX_RETRIES:-10}"
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/gluetun.png
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/gluetun.png
     x-casaos:
       envs:
         - container: TZ
@@ -90,6 +90,8 @@ services:
     restart: unless-stopped
     labels:
       - deunhealth.restart.on.unhealthy=true
+      - "io.portainer.webui=http://${HOST_IP}:${QBITTORRENT_PORT:-8083}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/qbittorrent.png
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -146,7 +148,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/docker.png
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/docker.png
     x-casaos:
       envs:
         - container: LOG_LEVEL
@@ -178,7 +180,8 @@ services:
     restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
     network_mode: service:gluetun
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nzbget.png
+      - "io.portainer.webui=http://${HOST_IP}:${NZBGET_PORT:-6789}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nzbget.png
     x-casaos:
       envs:
         - container: PUID
@@ -215,7 +218,8 @@ services:
         restart: true
     network_mode: service:gluetun
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/prowlarr.png
+      - "io.portainer.webui=http://${HOST_IP}:${PROWLARR_PORT:-9696}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/prowlarr.png
     x-casaos:
       envs:
         - container: PUID
@@ -250,7 +254,8 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.3
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sonarr.png
+      - "io.portainer.webui=http://${HOST_IP}:${SONARR_PORT:-8989}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sonarr.png
     x-casaos:
       envs:
         - container: PUID
@@ -292,7 +297,8 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.4
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/radarr.png
+      - "io.portainer.webui=http://${HOST_IP}:${RADARR_PORT:-7878}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/radarr.png
     x-casaos:
       envs:
         - container: PUID
@@ -334,7 +340,8 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.5
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/lidarr.png
+      - "io.portainer.webui=http://${HOST_IP}:${LIDARR_PORT:-8686}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/lidarr.png
     x-casaos:
       envs:
         - container: PUID
@@ -376,7 +383,8 @@ services:
       servarrnetwork:
         ipv4_address: 172.39.0.6
     labels:
-      icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/bazarr.png
+      - "io.portainer.webui=http://${HOST_IP}:${BAZARR_PORT:-6767}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/bazarr.png
     x-casaos:
       envs:
         - container: PUID
@@ -400,7 +408,32 @@ services:
           description:
             en_us: "Media storage directory"
 
-# Newer additions to this stack feel. Remove the '#' to add the service.
+  # Newer additions to this stack. Remove the '#' to add the service.
+  #
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - LOG_FILE=${LOG_FILE:-none}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TZ}
+    ports:
+      - ${HOST_IP}:${FLARESOLVERR_PORT:-8191}:8191
+    volumes:
+      - ${CONFIG_DIR}/flaresolverr:/config
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.7
+    restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
+    labels:
+      - "io.portainer.webui=http://${HOST_IP}:${FLARESOLVERR_PORT:-8191}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/flaresolverr.png
+#    # NOTE: Do NOT route through gluetun. FlareSolverr needs your real IP to
+#    # solve Cloudflare challenges — VPN exit nodes are typically blocked by CF.
+#    # After starting, add it in Prowlarr: Settings → Indexers → Add FlareSolverr
+#    # URL: http://flaresolverr:8191  (container-to-container on servarrnetwork)
 #
 #  ytdl-sub:
 #    image: ghcr.io/jmbannon/ytdl-sub:latest

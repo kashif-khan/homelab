@@ -40,6 +40,9 @@ services:
       test: ["CMD", "/usr/bin/check-health"]
       interval: 10s
       timeout: 3s
+    labels:
+      - "io.portainer.webui=http://${HOST_IP}:${NPM_ADMIN_PORT:-8181}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nginx-proxy-manager.png
 
   # [OPTIONAL] Automatically creates all proxy hosts in NPM via its API on first run.
   # Runs once and exits — safe to re-run (skips hosts that already exist).

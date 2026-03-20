@@ -17,6 +17,9 @@ services:
       - ${HOST_IP}:${JELLYFIN_DISCOVERY_UDP}:7359/udp #Service Discovery
       - ${HOST_IP}:${JELLYFIN_DLNA_UDP}:1900/udp #Client Discovery
     restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
+    labels:
+      - "io.portainer.webui=http://${HOST_IP}:${JELLYFIN_PORT:-8096}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyfin.png
 # Remove the Jellyfin service if installed directly on system.
 
   jellyseerr:
@@ -31,6 +34,9 @@ services:
     ports:
       - ${HOST_IP}:${JELLYSEERR_PORT}:5055
     restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
+    labels:
+      - "io.portainer.webui=http://${HOST_IP}:${JELLYSEERR_PORT:-5055}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyseerr.png
 
   jellystat-db:
     image: postgres:15.2
@@ -46,6 +52,9 @@ services:
     image: cyfershepard/jellystat:latest
     container_name: jellystat
     restart: "on-failure:${RESTART_MAX_RETRIES:-5}"
+    labels:
+      - "io.portainer.webui=http://${HOST_IP}:${JELLYSTAT_PORT:-3000}"
+      - icon=https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellystat.png
     environment:
       POSTGRES_USER: ${JELLYSTAT_POSTGRES_USER}
       POSTGRES_PASSWORD: ${JELLYSTAT_POSTGRES_PASSWORD}
