@@ -455,6 +455,12 @@ If you'd like to test Gluetun connectivity from a container using the service ju
 docker exec -it container_name bash
 wget -qO- https://ipinfo.io
 ```
+
+To verify qBittorrent specifically is tunneled through the VPN without opening a shell:
+```bash
+docker exec qbittorrent wget -qO- ipinfo.io
+```
+The response should show the VPN server's IP and country (e.g. `Germany`), not your real public IP.
 ### Passing Through Containers
 When containers are in the same docker compose then all you need to add is a `network_mode: service:container_name` and open the ports through the the gluetun container. See example with a different torrent client below.
 ```yaml
