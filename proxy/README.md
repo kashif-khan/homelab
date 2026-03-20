@@ -62,21 +62,46 @@ homelab.lan  →  HOST_IP
 In Pi-hole _Local DNS → CNAME Records_, add one entry per service pointing to that A record:
 
 ```text
-jellyfin.lan     →  homelab.lan
-sonarr.lan       →  homelab.lan
-radarr.lan       →  homelab.lan
-lidarr.lan       →  homelab.lan
-bazarr.lan       →  homelab.lan
-prowlarr.lan     →  homelab.lan
-qbittorrent.lan  →  homelab.lan
-nzbget.lan       →  homelab.lan
-jellyseerr.lan   →  homelab.lan
-jellystat.lan    →  homelab.lan
+# Infrastructure
+casa.lan          →  homelab.lan
+pihole.lan        →  homelab.lan
+portainer.lan     →  homelab.lan
+npm.lan           →  homelab.lan
+
+# Media / *arr
+jellyfin.lan      →  homelab.lan
+jellyseerr.lan    →  homelab.lan
+jellystat.lan     →  homelab.lan
+sonarr.lan        →  homelab.lan
+radarr.lan        →  homelab.lan
+lidarr.lan        →  homelab.lan
+bazarr.lan        →  homelab.lan
+prowlarr.lan      →  homelab.lan
+qbittorrent.lan   →  homelab.lan
+nzbget.lan        →  homelab.lan
+
+# Home Automation
+homeassistant.lan →  homelab.lan
 ```
+
+> __Wildcard alternative:__ Pi-hole doesn't support wildcard CNAMEs in the UI. As an alternative, SSH into the Pi-hole host and create `/etc/dnsmasq.d/homelab-wildcard.conf`:
+>
+> ```conf
+> address=/lan/HOST_IP
+> ```
+>
+> Then run `pihole restartdns`. This resolves _all_ `.lan` names to `HOST_IP` — explicit Local DNS records still take precedence for other devices.
 
 Set your router's DNS server to Pi-hole's IP so all devices use it.
 
 > __LAN_TLD:__ set `LAN_TLD=lan` in `.env` to match Pi-hole's domain setting (_Settings → DNS → Pi-hole domain name_).
+
+> __`*.lan` not resolving in a specific browser profile:__ If `homelab.lan` or any `*.lan` name fails in one browser profile but works in another profile or browser (even after clearing cache, cookies, and history), the cause is the browser's built-in DNS resolver (DNS-over-HTTPS / DoH) bypassing Pi-hole. DNS cache and cookies are unrelated — disable secure DNS in the affected profile:
+>
+> - __Chrome / Edge:__ _Settings → Privacy and security → Security → Use secure DNS_ → __Off__
+> - __Firefox:__ _Settings → General → Network Settings → Enable DNS over HTTPS_ → __Off__
+>
+> This is per-profile, which is why a fresh profile fails while an older one works.
 
 #### 3b. NPM proxy hosts
 
@@ -88,20 +113,53 @@ docker compose up -d proxy npm-init
 
 Or create them manually in NPM _Hosts → Proxy Hosts_:
 
-| Proxy host | Forward to |
-| --- | --- |
-| `sonarr.lan` | `http://HOST_IP:8989` |
-| `radarr.lan` | `http://HOST_IP:7878` |
-| `lidarr.lan` | `http://HOST_IP:8686` |
-| `bazarr.lan` | `http://HOST_IP:6767` |
-| `prowlarr.lan` | `http://HOST_IP:9696` |
-| `qbittorrent.lan` | `http://HOST_IP:8083` |
-| `nzbget.lan` | `http://HOST_IP:6789` |
-| `jellyfin.lan` | `http://HOST_IP:8096` |
-| `jellyseerr.lan` | `http://HOST_IP:5055` |
-| `jellystat.lan` | `http://HOST_IP:3000` |
+| Proxy host | Forward to | Notes |
+| --- | --- | --- |
+| `npm.lan` | `http://HOST_IP:8181` | NPM admin UI |
+| `casa.lan` | `http://HOST_IP:9090` | CasaOS dashboard |
+| `pihole.lan` | `http://HOST_IP:80` | 301 redirect to `/admin` — see note below |
+| `portainer.lan` | `http://HOST_IP:9000` | Portainer |
+| `homeassistant.lan` | `http://HOST_IP:8123` | ⚠️ See note below |
+| `sonarr.lan` | `http://HOST_IP:8989` | |
+| `radarr.lan` | `http://HOST_IP:7878` | |
+| `lidarr.lan` | `http://HOST_IP:8686` | |
+| `bazarr.lan` | `http://HOST_IP:6767` | |
+| `prowlarr.lan` | `http://HOST_IP:9696` | |
+| `qbittorrent.lan` | `http://HOST_IP:8083` | |
+| `nzbget.lan` | `http://HOST_IP:6789` | |
+| `jellyfin.lan` | `http://HOST_IP:8096` | |
+| `jellyseerr.lan` | `http://HOST_IP:5055` | |
+| `jellystat.lan` | `http://HOST_IP:3000` | |
 
-#### 3c. SSL certificate
+> __Pi-hole `/admin` redirect:__ `pihole.lan` opens a blank page without a redirect because Pi-hole's web UI lives at `/admin`. In the `pihole.lan` proxy host, click the gear icon (⚙) → _Advanced_ tab and add the following custom Nginx config:
+>
+> ```nginx
+> location = / {
+>     return 301 /admin;
+> }
+> ```
+>
+> This redirects `http://pihole.lan/` → `http://pihole.lan/admin` with a 301. All other paths (e.g. `/admin/...`) pass through normally.
+
+> ⚠️ __Home Assistant 400 Bad Request (TODO):__ HA rejects proxied requests unless its `trusted_proxies` and `use_x_forwarded_for` are configured. Add the following to `configuration.yaml` in Home Assistant, then restart HA. Also enable _WebSocket support_ on the NPM proxy host for this entry.
+
+```yaml
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - HOST_IP        # NPM host IP
+    - 172.16.0.0/12  # Docker bridge networks
+```
+
+#### 3c. Updating IP, port, or domain name
+
+When `HOST_IP`, a port, or `LAN_TLD` changes, update __both__ Pi-hole and NPM:
+
+1. __Pi-hole__ — _Local DNS → DNS Records_: update the `homelab.lan` A record to the new IP. CNAME records don't need changing (they point to `homelab.lan`, not the IP directly). If using the dnsmasq wildcard file, update the IP in `/etc/dnsmasq.d/homelab-wildcard.conf` and run `pihole restartdns`.
+2. __NPM__ — _Hosts → Proxy Hosts_: edit each affected proxy host to update the forward hostname/IP and/or port. If the domain (TLD) changed, delete and recreate the host with the new domain name.
+3. __`.env`__ — update `HOST_IP` and/or `LAN_TLD` in both `proxy/.env` and `media/.env` so they stay in sync.
+
+#### 3d. SSL certificate
 
 Generate a wildcard cert for `*.lan` — see [SSL Certificate Options](#ssl-certificate-options) below — then on the SSL tab of each proxy host select it and enable _Force SSL_.
 
