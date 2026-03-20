@@ -21,6 +21,7 @@ Make sure to review everything here and if you have any issues please submit it 
   - [Docker Compose and .env](#docker-compose-and-env)
   - [Gluetun VPN](#gluetun-vpn)
     * [Setup and Configuration](#setup-and-configuration)
+    * [PureVPN Server Selection](#purevpn-server-selection)
     * [Testing Gluetun Connectivity](#testing-gluetun-connectivity)
     * [Passing Through Containers](#passing-through-containers)
     * [External Container to Gluetun](#external-container-to-gluetun)
@@ -232,6 +233,214 @@ SERVER_CITIES=city
 # Heath check duration
 HEALTH_VPN_DURATION_INITIAL=120s
 ```
+
+### PureVPN Server Selection
+
+The `.env.example` defaults to `SERVER_COUNTRIES=Germany`. To use a different country, region, city, or specific hostname, update the relevant variables in your `.env`.
+
+#### Optional server filter variables (PureVPN + OpenVPN)
+
+| Variable | Example | Notes |
+| --- | --- | --- |
+| `SERVER_COUNTRIES` | `Germany` | Comma-separated. Broadest filter — recommended starting point |
+| `SERVER_REGIONS` | `Hesse` | Comma-separated. Narrows within a country |
+| `SERVER_CITIES` | `Frankfurt am Main` | Comma-separated. Narrows to a specific city |
+| `SERVER_HOSTNAMES` | `de2-auto-udp.ptoserver.com` | Comma-separated. Most specific — avoid unless needed; if Gluetun removes this hostname your container stops working |
+| `OPENVPN_PROTOCOL` | `udp` | `udp` (default, faster) or `tcp` (use if UDP is blocked on your network) |
+
+Only set the narrowest filter you need — `SERVER_COUNTRIES=Germany` is sufficient for most use cases.
+
+> __Protocol and hostnames:__ PureVPN uses separate hostnames per protocol. Hostnames ending in `-udp` are UDP-only, `-tcp` are TCP-only. Setting `OPENVPN_PROTOCOL=udp` with a `-tcp` hostname (or vice versa) will result in no matching servers and Gluetun will fail to connect.
+
+#### Refresh the server list
+
+To get up-to-date values for all filter variables:
+
+```bash
+docker run --rm -v /tmp/gluetun:/gluetun qmcgaw/gluetun format-servers -purevpn
+```
+
+#### Available PureVPN servers (as of 2026-03-20)
+
+| Country | Region | City | Hostname | TCP | UDP |
+| --- | --- | --- | --- | --- | --- |
+| Albania | Tirana | Tirana | `al2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Albania | Tirana | Tirana | `al2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Australia | New South Wales | Sydney | `au2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Australia | New South Wales | Sydney | `ausd2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Australia | New South Wales | Sydney | `ausd2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Australia | Victoria | Melbourne | `au2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Australia | Victoria | Melbourne | `aume2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Australia | Victoria | Melbourne | `aume2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Australia | Victoria | Melbourne | `nz2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Australia | Western Australia | Perth | `au2-pe-tcp.ptoserver.com` | ✅ | ❌ |
+| Australia | Western Australia | Perth | `au2-pe-udp.ptoserver.com` | ❌ | ✅ |
+| Austria | Vienna | Vienna | `at2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Austria | Vienna | Vienna | `at2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Belgium | Brussels Capital | Brussels | `be2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Belgium | Brussels Capital | Brussels | `be2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Brazil | São Paulo | São Paulo | `br2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Brazil | São Paulo | São Paulo | `br2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Bulgaria | Sofia-Capital | Sofia | `bg2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Bulgaria | Sofia-Capital | Sofia | `bg2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Canada | British Columbia | Vancouver | `ca2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Canada | British Columbia | Vancouver | `ca2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Canada | British Columbia | Vancouver | `caq2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Canada | British Columbia | Vancouver | `cav2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Canada | British Columbia | Vancouver | `cav2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Canada | Ontario | Toronto | `caq2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Costa Rica | San José | San Pedro | `cr2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Costa Rica | San José | San Pedro | `cr2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Cyprus | Nicosia | Nicosia | `cy2-auto-tcp.ptoserver.com` | ✅ | ✅ |
+| Czech Republic | Prague | Prague | `cz2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Czech Republic | Prague | Prague | `cz2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Denmark | Capital Region | Copenhagen | `dk2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Estonia | Harjumaa | Tallinn | `ee2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Estonia | Harjumaa | Tallinn | `ee2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Finland | Uusimaa | Helsinki | `fi2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Finland | Uusimaa | Helsinki | `fi2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| France | Île-de-France | Paris | `fr2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| France | Île-de-France | Paris | `fr2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Georgia | T'bilisi | Tbilisi | `ge2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Georgia | T'bilisi | Tbilisi | `ge2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `af2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `af2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `ao2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `ao2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `bb2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `bb2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `bd2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `bd2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `bh2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `bh2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `bm2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `bm2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `bs2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `bs2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `de2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `de2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `dz2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `dz2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Germany | Hesse | Frankfurt am Main | `ru2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Germany | Hesse | Frankfurt am Main | `ru2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Greece | Attica | Athens | `gr2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Hong Kong | Central and Western | Hong Kong | `hk2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Hong Kong | Central and Western | Hong Kong | `hk2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Hungary | Budapest | Budapest | `hu2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Hungary | Budapest | Budapest | `hu2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Indonesia | Jakarta | Jakarta | `id2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Indonesia | Jakarta | Jakarta | `id2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Ireland | Leinster | Dublin | `ie2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Ireland | Leinster | Dublin | `ie2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Italy | Lombardy | Milan | `it2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Italy | Lombardy | Milan | `it2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Japan | Tokyo | Tokyo | `jp2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Kenya | Nairobi Area | Nairobi | `ke2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Kenya | Nairobi Area | Nairobi | `ke2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Korea | Seoul | Seoul | `kr2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Latvia | Riga | Riga | `lv2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Latvia | Riga | Riga | `lv2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Lithuania | Siauliai | Šiauliai | `lt2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Lithuania | Siauliai | Šiauliai | `lt2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Mexico | Querétaro | Santiago de Querétaro | `mx2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Mexico | Querétaro | Santiago de Querétaro | `mx2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Moldova | Chișinău Municipality | Chisinau | `md2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Moldova | Chișinău Municipality | Chisinau | `md2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `eg2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `eg2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `is2-auto-tcp.ptoserver.com` | ✅ | ✅ |
+| Netherlands | North Holland | Amsterdam | `mc2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `mc2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `ng2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `ng2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `nl2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `nl2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `om2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `om2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `pa2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `pa2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `pr2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `pr2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `ua2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `ua2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `vg2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `vg2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Netherlands | North Holland | Amsterdam | `vn2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Netherlands | North Holland | Amsterdam | `vn2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| New Zealand | Auckland | Auckland | `nz2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Norway | Oslo | Oslo | `no2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Norway | Oslo | Oslo | `no2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Poland | Mazovia | Warsaw | `pl2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Portugal | Lisbon | Lisbon | `lu2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Portugal | Lisbon | Lisbon | `lu2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Portugal | Lisbon | Lisbon | `pt2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Romania | București | Bucharest | `ro2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Romania | București | Bucharest | `ro2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Serbia | Central Serbia | Belgrade | `rs2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Serbia | Central Serbia | Belgrade | `rs2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Singapore | Singapore | Singapore | `bn2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Singapore | Singapore | Singapore | `in2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Singapore | Singapore | Singapore | `in2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Singapore | Singapore | Singapore | `ph2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Singapore | Singapore | Singapore | `ph2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Singapore | Singapore | Singapore | `sg2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Singapore | Singapore | Singapore | `sg2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Slovakia | Bratislavský Kraj | Bratislava | `sk2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Slovakia | Bratislavský Kraj | Bratislava | `sk2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| South Africa | Gauteng | Johannesburg | `za2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Spain | Madrid | Madrid | `es2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Sweden | Stockholm | Stockholm | `se2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Sweden | Stockholm | Stockholm | `se2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Switzerland | Zurich | Zürich | `ch2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Switzerland | Zurich | Zürich | `ch2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Taiwan | Taiwan | Taipei | `tw2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Taiwan | Taiwan | Taipei | `tw2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| Turkey | Istanbul | Istanbul | `tr2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| Turkey | Istanbul | Istanbul | `tr2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United Arab Emirates | Dubai | Dubai | `ae2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United Arab Emirates | Dubai | Dubai | `ae2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United Kingdom | England | London | `uk2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United Kingdom | England | London | `ukl2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United Kingdom | England | London | `ukl2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United Kingdom | England | Manchester | `uk2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United Kingdom | England | Manchester | `ukm2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United Kingdom | England | Manchester | `ukm2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | California | Los Angeles | `usca2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | California | Los Angeles | `usca2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | California | Los Angeles | `usphx2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | California | Los Angeles | `usphx2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | California | San Jose | `ussf2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | California | San Jose | `ussf2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Florida | Miami | `usfl2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Florida | Miami | `usfl2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Georgia | Atlanta | `us-global-tcp2.ptoserver.com` | ✅ | ❌ |
+| United States | Georgia | Atlanta | `us-global-udp2.ptoserver.com` | ❌ | ✅ |
+| United States | Georgia | Atlanta | `usga2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Georgia | Atlanta | `usga2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Illinois | Chicago | `usil2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Illinois | Chicago | `usil2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | New Jersey | Secaucus | `usnj2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | New Jersey | Secaucus | `usnj2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | New Jersey | Secaucus | `usny2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | New Jersey | Weehawken | `usny2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | New York | New York City | `ar2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | New York | New York City | `ar2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | New York | New York City | `aw2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | New York | New York City | `aw2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | New York | New York City | `bo2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | New York | New York City | `bo2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Texas | Houston | `ustx2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Texas | Houston | `ustx2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Utah | Riverton | `usut2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Utah | Riverton | `usut2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Virginia | Ashburn | `usva2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Virginia | Ashburn | `usva2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Virginia | Herndon | `uswdc2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Virginia | Herndon | `uswdc2-auto-udp.ptoserver.com` | ❌ | ✅ |
+| United States | Washington | Seattle | `ussa2-auto-tcp.ptoserver.com` | ✅ | ❌ |
+| United States | Washington | Seattle | `ussa2-auto-udp.ptoserver.com` | ❌ | ✅ |
+
+> Run the refresh command above to get the latest list — this table may become stale as PureVPN adds or removes servers.
 
 ### Testing Gluetun Connectivity
 Once your containers are up and running, you can test your connection is correct and secured. This assumes you keep the `gluetun` container name. Learn more at the [gluetun wiki](https://github.com/qdm12/gluetun-wiki/blob/main/setup/test-your-setup.md).
