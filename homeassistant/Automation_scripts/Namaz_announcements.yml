@@ -5,7 +5,17 @@ triggers:
     trigger: time_pattern
 conditions:
   - condition: template
-    value_template: "{{ now_hm in [fajr, dhuhr, asr, maghrib, isha] }}"
+    value_template: >-
+      {{ now_hm in [
+        fajr,
+        fajr_end,
+        dhuhr,
+        asr,
+        maghrib,
+        isha,
+        isha_end,
+        tahajjud_start
+      ] }}
 actions:
   - target:
       entity_id: "{{ speaker }}"
@@ -34,6 +44,17 @@ actions:
               cache: true
               media_player_entity_id: "{{ speaker }}"
               message: It is time for Dhuhr prayer.
+            action: tts.speak
+      - conditions:
+          - condition: template
+            value_template: "{{ now_hm == fajr_end }}"
+        sequence:
+          - target:
+              entity_id: tts.google_translate_en_com
+            data:
+              cache: true
+              media_player_entity_id: "{{ speaker }}"
+              message: Fajr time has ended.
             action: tts.speak
       - conditions:
           - condition: template
@@ -66,7 +87,37 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
+              message: Maghrib time has ended.
+            action: tts.speak
+          - delay: "00:00:02"
+          - target:
+              entity_id: tts.google_translate_en_com
+            data:
+              cache: true
+              media_player_entity_id: "{{ speaker }}"
               message: It is time for Isha prayer.
+            action: tts.speak
+      - conditions:
+          - condition: template
+            value_template: "{{ now_hm == isha_end }}"
+        sequence:
+          - target:
+              entity_id: tts.google_translate_en_com
+            data:
+              cache: true
+              media_player_entity_id: "{{ speaker }}"
+              message: Isha time has ended.
+            action: tts.speak
+      - conditions:
+          - condition: template
+            value_template: "{{ now_hm == tahajjud_start }}"
+        sequence:
+          - target:
+              entity_id: tts.google_translate_en_com
+            data:
+              cache: true
+              media_player_entity_id: "{{ speaker }}"
+              message: Tahajjud time has started.
             action: tts.speak
 mode: single
 variables:
@@ -75,6 +126,10 @@ variables:
   now_hm: "{{ now().strftime('%H:%M') }}"
   fajr: >-
     {% set s = states('sensor.islamic_prayer_times_fajr_prayer') %} {{
+    as_local(as_datetime(s)).strftime('%H:%M') if s not in
+    ['unknown','unavailable','none',''] else '' }}
+  fajr_end: >-
+    {% set s = states('sensor.islamic_prayer_times_sunrise') %} {{
     as_local(as_datetime(s)).strftime('%H:%M') if s not in
     ['unknown','unavailable','none',''] else '' }}
   dhuhr: >-
@@ -93,3 +148,18 @@ variables:
     {% set s = states('sensor.islamic_prayer_times_isha_prayer') %} {{
     as_local(as_datetime(s)).strftime('%H:%M') if s not in
     ['unknown','unavailable','none',''] else '' }}
+  isha_end: >-
+    {% set s = states('sensor.islamic_prayer_times_midnight') %} {{
+    as_local(as_datetime(s)).strftime('%H:%M') if s not in
+    ['unknown','unavailable','none',''] else '' }}
+  tahajjud_start: >-
+    {% set maghrib_s = states('sensor.islamic_prayer_times_maghrib_prayer') %}
+    {% set midnight_s = states('sensor.islamic_prayer_times_midnight') %}
+    {% if maghrib_s in ['unknown','unavailable','none',''] or midnight_s in ['unknown','unavailable','none',''] %}
+      {{ '' }}
+    {% else %}
+      {% set maghrib_dt = as_local(as_datetime(maghrib_s)) %}
+      {% set midnight_dt = as_local(as_datetime(midnight_s)) %}
+      {% set tahajjud_dt = maghrib_dt + ((midnight_dt - maghrib_dt) * 4 / 3) %}
+      {{ tahajjud_dt.strftime('%H:%M') }}
+    {% endif %}
