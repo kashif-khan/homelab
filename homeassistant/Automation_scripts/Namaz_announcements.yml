@@ -33,8 +33,9 @@ actions:
               cache: true
               media_player_entity_id: "{{ speaker }}"
               message: >-
-                It is time for Fajr prayer. There is {{ fajr_remaining_text }}
-                left for Fajr. Dhuhr will begin at {{ dhuhr_time_spoken }}.
+                It is time for Fajr prayer. It started at {{
+                fajr_time_spoken }}. There is {{ fajr_remaining_text }} left
+                for Fajr. Dhuhr will begin at {{ dhuhr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -46,8 +47,9 @@ actions:
               cache: true
               media_player_entity_id: "{{ speaker }}"
               message: >-
-                It is time for Dhuhr prayer. There is {{ dhuhr_remaining_text }}
-                left for Dhuhr. Asr will begin at {{ asr_time_spoken }}.
+                It is time for Dhuhr prayer. It started at {{
+                dhuhr_time_spoken }}. There is {{ dhuhr_remaining_text }} left
+                for Dhuhr. Asr will begin at {{ asr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -72,9 +74,9 @@ actions:
               cache: true
               media_player_entity_id: "{{ speaker }}"
               message: >-
-                It is time for Asr prayer. There is {{ asr_remaining_text }}
-                left for Asr. Maghrib will begin at {{
-                maghrib_time_spoken }}.
+                It is time for Asr prayer. It started at {{
+                asr_time_spoken }}. There is {{ asr_remaining_text }} left for
+                Asr. Maghrib will begin at {{ maghrib_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -86,9 +88,9 @@ actions:
               cache: true
               media_player_entity_id: "{{ speaker }}"
               message: >-
-                It is time for Maghrib prayer. There is {{
-                maghrib_remaining_text }} left for Maghrib. Isha will begin at
-                {{ isha_time_spoken }}.
+                It is time for Maghrib prayer. It started at {{
+                maghrib_time_spoken }}. There is {{ maghrib_remaining_text }}
+                left for Maghrib. Isha will begin at {{ isha_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -110,9 +112,9 @@ actions:
               cache: true
               media_player_entity_id: "{{ speaker }}"
               message: >-
-                It is time for Isha prayer. There is {{ isha_remaining_text }}
-                left for Isha. Fajr will begin at {{
-                next_fajr_time_spoken }}.
+                It is time for Isha prayer. It started at {{
+                isha_time_spoken }}. There is {{ isha_remaining_text }} left
+                for Isha. Fajr will begin at {{ next_fajr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -214,6 +216,12 @@ variables:
     {% set s = states('sensor.islamic_prayer_times_midnight') %} {{
     as_local(as_datetime(s)).strftime('%H:%M') if s not in
     ['unknown','unavailable','none',''] else '' }}
+  fajr_time_spoken: >-
+    {% if fajr_ts not in [none, 'None', ''] %}
+      {{ (fajr_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}
+    {% else %}
+      unknown
+    {% endif %}
   dhuhr_time_spoken: >-
     {% if dhuhr_ts not in [none, 'None', ''] %}
       {{ (dhuhr_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}

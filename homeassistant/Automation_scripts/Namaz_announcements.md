@@ -11,6 +11,7 @@ Every minute, the automation compares the current local time to a set of prayer-
 The spoken messages now include:
 
 - The prayer starting now
+- The exact start time of that prayer in spoken clock format
 - How much time is left for that prayer, when that prayer has a defined end
 - When the next namaz will begin
 
@@ -33,6 +34,7 @@ Every minute
         -> choose matching time
            -> fajr:
               speak "It is time for Fajr prayer..."
+              include Fajr start time
               include remaining Fajr time
               include Dhuhr start time
            -> fajr_end:
@@ -40,14 +42,17 @@ Every minute
               include Dhuhr start time
            -> dhuhr:
               speak "It is time for Dhuhr prayer..."
+              include Dhuhr start time
               include remaining Dhuhr time
               include Asr start time
            -> asr:
               speak "It is time for Asr prayer..."
+              include Asr start time
               include remaining Asr time
               include Maghrib start time
            -> maghrib:
               speak "It is time for Maghrib prayer..."
+              include Maghrib start time
               include remaining Maghrib time
               include Isha start time
            -> isha:
@@ -55,6 +60,7 @@ Every minute
               include Isha start time
               wait 2 seconds
               speak "It is time for Isha prayer..."
+              include Isha start time
               include remaining Isha time
               include next Fajr start time
            -> isha_end:
@@ -76,14 +82,14 @@ flowchart TD
     C -- Yes --> D[Set speaker volume to 0.7]
     D --> E{Which time matched?}
 
-    E -->|fajr| F[Speak Fajr start, remaining Fajr time, next Dhuhr time]
+    E -->|fajr| F[Speak Fajr start, Fajr start time, remaining Fajr time, next Dhuhr time]
     E -->|fajr_end| G[Speak Fajr ended, next Dhuhr time]
-    E -->|dhuhr| H[Speak Dhuhr start, remaining Dhuhr time, next Asr time]
-    E -->|asr| I[Speak Asr start, remaining Asr time, next Maghrib time]
-    E -->|maghrib| J[Speak Maghrib start, remaining Maghrib time, next Isha time]
+    E -->|dhuhr| H[Speak Dhuhr start, Dhuhr start time, remaining Dhuhr time, next Asr time]
+    E -->|asr| I[Speak Asr start, Asr start time, remaining Asr time, next Maghrib time]
+    E -->|maghrib| J[Speak Maghrib start, Maghrib start time, remaining Maghrib time, next Isha time]
     E -->|isha| K[Speak Maghrib ended, next Isha time]
     K --> L[Delay 2 seconds]
-    L --> M[Speak Isha start, remaining Isha time, next Fajr time]
+    L --> M[Speak Isha start, Isha start time, remaining Isha time, next Fajr time]
     E -->|isha_end| N[Speak Isha ended, next Fajr time]
     E -->|tahajjud_start| O[Speak Tahajjud start, time left until Fajr, next Fajr time]
 ```
@@ -174,14 +180,57 @@ Each trigger point produces the following style of message:
 
 | Trigger | Spoken content |
 |---|---|
-| `fajr` | Fajr has started, how much time remains for Fajr, and when Dhuhr begins |
+| `fajr` | Fajr has started, what time Fajr started, how much time remains for Fajr, and when Dhuhr begins |
 | `fajr_end` | Fajr has ended and when Dhuhr begins |
-| `dhuhr` | Dhuhr has started, how much time remains for Dhuhr, and when Asr begins |
-| `asr` | Asr has started, how much time remains for Asr, and when Maghrib begins |
-| `maghrib` | Maghrib has started, how much time remains for Maghrib, and when Isha begins |
-| `isha` | First, Maghrib has ended and when Isha begins. Then after 2 seconds, Isha has started, how much time remains for Isha, and when the next Fajr begins |
+| `dhuhr` | Dhuhr has started, what time Dhuhr started, how much time remains for Dhuhr, and when Asr begins |
+| `asr` | Asr has started, what time Asr started, how much time remains for Asr, and when Maghrib begins |
+| `maghrib` | Maghrib has started, what time Maghrib started, how much time remains for Maghrib, and when Isha begins |
+| `isha` | First, Maghrib has ended and when Isha begins. Then after 2 seconds, Isha has started, what time Isha started, how much time remains for Isha, and when the next Fajr begins |
 | `isha_end` | Isha has ended and when the next Fajr begins |
 | `tahajjud_start` | Tahajjud has started, how much time remains until Fajr, and when Fajr begins |
+
+---
+
+## How Remaining Time Is Calculated
+
+The remaining-time phrases in [`Namaz_announcements.yml`](Namaz_announcements.yml) are not based on the current second-by-second clock. They are calculated as fixed durations between the start of one prayer window and the next boundary that ends that window, then converted into spoken text.
+
+The automation first converts each relevant prayer sensor into a Unix timestamp:
+
+- `fajr_ts` is the Fajr start time
+- `fajr_end_ts` is sunrise, which is treated as the end of Fajr
+- `dhuhr_ts` is the Dhuhr start time
+- `asr_ts` is the Asr start time
+- `maghrib_ts` is the Maghrib start time
+- `isha_ts` is the Isha start time
+- `isha_end_ts` is Islamic midnight, which is treated as the end of Isha
+- `next_fajr_ts` is the next valid Fajr time, using the next day when needed
+- `tahajjud_start_ts` is a calculated timestamp for the start of Tahajjud
+
+Each `*_remaining_text` variable subtracts the prayer start timestamp from that prayer's end boundary, divides by `60` to get minutes, rounds to a whole number, and then splits the result into hours and minutes.
+
+The formulas are:
+
+| Variable | Calculation | Meaning |
+|---|---|---|
+| `fajr_remaining_text` | `(fajr_end_ts - fajr_ts) / 60` | Total Fajr window from Fajr until sunrise |
+| `dhuhr_remaining_text` | `(asr_ts - dhuhr_ts) / 60` | Total Dhuhr window from Dhuhr until Asr |
+| `asr_remaining_text` | `(maghrib_ts - asr_ts) / 60` | Total Asr window from Asr until Maghrib |
+| `maghrib_remaining_text` | `(isha_ts - maghrib_ts) / 60` | Total Maghrib window from Maghrib until Isha |
+| `isha_remaining_text` | `(isha_end_ts - isha_ts) / 60` | Total Isha window from Isha until Islamic midnight |
+| `tahajjud_remaining_text` | `(next_fajr_ts - tahajjud_start_ts) / 60` | Total Tahajjud window from Tahajjud start until Fajr |
+
+After the total minutes are computed, the template does this:
+
+1. Divides by `60` and rounds to a whole minute.
+2. Uses integer division `// 60` to get whole hours.
+3. Uses modulo `% 60` to get the leftover minutes.
+4. Builds a phrase in one of these forms:
+   `45 minutes`
+   `1 hour`
+   `2 hours and 15 minutes`
+
+So when the message says there is time left for a prayer, it is speaking the full prayer-window length defined by your configured prayer sensors and derived boundaries, not a live countdown that shrinks minute by minute after the announcement starts.
 
 ---
 
@@ -189,8 +238,10 @@ Each trigger point produces the following style of message:
 
 - **Time zone awareness:** The prayer sensor timestamps are converted to local time before comparisons and announcements are generated.
 - **End times used:** Fajr ends at sunrise, Maghrib ends at Isha, and Isha ends at the integration's Islamic midnight.
+- **Start-time wording:** Each prayer-start message includes the exact start time in spoken 12-hour format.
 - **Next-prayer wording:** Each prayer-start message includes the next namaz start time in spoken 12-hour format.
 - **Remaining-time wording:** The automation converts timestamp differences into human-readable phrases such as `45 minutes` or `2 hours and 10 minutes`.
+- **Not a live countdown:** The remaining-time phrase is computed from prayer-boundary timestamps at trigger time, so it announces the total duration of that prayer window rather than repeatedly updating throughout the prayer.
 - **Back-to-back Isha announcements:** At Isha time, the automation intentionally plays two messages in sequence: one for Maghrib ending and one for Isha beginning.
 - **Next-day Fajr handling:** Late-night announcements use a computed next-day Fajr timestamp so the spoken Fajr time remains correct after Isha.
 - **Tahajjud calculation:** Tahajjud is calculated as the start of the final third of the night using Maghrib and Islamic midnight.
