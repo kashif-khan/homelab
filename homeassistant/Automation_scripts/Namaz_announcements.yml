@@ -32,7 +32,9 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: It is time for Fajr prayer.
+              message: >-
+                It is time for Fajr prayer. There is {{ fajr_remaining_text }}
+                left for Fajr. Dhuhr will begin at {{ dhuhr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -43,7 +45,9 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: It is time for Dhuhr prayer.
+              message: >-
+                It is time for Dhuhr prayer. There is {{ dhuhr_remaining_text }}
+                left for Dhuhr. Asr will begin at {{ asr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -54,7 +58,9 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: Fajr time has ended.
+              message: >-
+                Fajr time has ended. Dhuhr will begin at {{
+                dhuhr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -65,7 +71,10 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: It is time for Asr prayer.
+              message: >-
+                It is time for Asr prayer. There is {{ asr_remaining_text }}
+                left for Asr. Maghrib will begin at {{
+                maghrib_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -76,7 +85,10 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: It is time for Maghrib prayer.
+              message: >-
+                It is time for Maghrib prayer. There is {{
+                maghrib_remaining_text }} left for Maghrib. Isha will begin at
+                {{ isha_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -87,7 +99,9 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: Maghrib time has ended.
+              message: >-
+                Maghrib time has ended. Isha will begin at {{
+                isha_time_spoken }}.
             action: tts.speak
           - delay: "00:00:02"
           - target:
@@ -95,7 +109,10 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: It is time for Isha prayer.
+              message: >-
+                It is time for Isha prayer. There is {{ isha_remaining_text }}
+                left for Isha. Fajr will begin at {{
+                next_fajr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -106,7 +123,9 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: Isha time has ended.
+              message: >-
+                Isha time has ended. Fajr will begin at {{
+                next_fajr_time_spoken }}.
             action: tts.speak
       - conditions:
           - condition: template
@@ -117,13 +136,56 @@ actions:
             data:
               cache: true
               media_player_entity_id: "{{ speaker }}"
-              message: Tahajjud time has started.
+              message: >-
+                Tahajjud time has started. There is {{
+                tahajjud_remaining_text }} left until Fajr. Fajr will begin at
+                {{ next_fajr_time_spoken }}.
             action: tts.speak
 mode: single
 variables:
   speaker: media_player.family_room_speaker
   vol: 0.7
   now_hm: "{{ now().strftime('%H:%M') }}"
+  fajr_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_fajr_prayer') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  fajr_end_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_sunrise') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  dhuhr_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_dhuhr_prayer') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  asr_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_asr_prayer') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  maghrib_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_maghrib_prayer') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  isha_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_isha_prayer') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  isha_end_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_midnight') %}
+    {{ as_timestamp(as_local(as_datetime(s))) if s not in ['unknown','unavailable','none',''] else none }}
+  next_fajr_ts: >-
+    {% set s = states('sensor.islamic_prayer_times_fajr_prayer') %}
+    {% if s in ['unknown','unavailable','none',''] %}
+      {{ none }}
+    {% else %}
+      {% set fajr_dt = as_local(as_datetime(s)) %}
+      {{ as_timestamp(fajr_dt + timedelta(days=1) if fajr_dt <= now() else fajr_dt) }}
+    {% endif %}
+  tahajjud_start_ts: >-
+    {% set maghrib_s = states('sensor.islamic_prayer_times_maghrib_prayer') %}
+    {% set midnight_s = states('sensor.islamic_prayer_times_midnight') %}
+    {% if maghrib_s in ['unknown','unavailable','none',''] or midnight_s in ['unknown','unavailable','none',''] %}
+      {{ none }}
+    {% else %}
+      {% set maghrib_dt = as_local(as_datetime(maghrib_s)) %}
+      {% set midnight_dt = as_local(as_datetime(midnight_s)) %}
+      {% set tahajjud_dt = maghrib_dt + ((midnight_dt - maghrib_dt) * 4 / 3) %}
+      {{ as_timestamp(tahajjud_dt) }}
+    {% endif %}
   fajr: >-
     {% set s = states('sensor.islamic_prayer_times_fajr_prayer') %} {{
     as_local(as_datetime(s)).strftime('%H:%M') if s not in
@@ -152,6 +214,102 @@ variables:
     {% set s = states('sensor.islamic_prayer_times_midnight') %} {{
     as_local(as_datetime(s)).strftime('%H:%M') if s not in
     ['unknown','unavailable','none',''] else '' }}
+  dhuhr_time_spoken: >-
+    {% if dhuhr_ts not in [none, 'None', ''] %}
+      {{ (dhuhr_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}
+    {% else %}
+      unknown
+    {% endif %}
+  asr_time_spoken: >-
+    {% if asr_ts not in [none, 'None', ''] %}
+      {{ (asr_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}
+    {% else %}
+      unknown
+    {% endif %}
+  maghrib_time_spoken: >-
+    {% if maghrib_ts not in [none, 'None', ''] %}
+      {{ (maghrib_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}
+    {% else %}
+      unknown
+    {% endif %}
+  isha_time_spoken: >-
+    {% if isha_ts not in [none, 'None', ''] %}
+      {{ (isha_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}
+    {% else %}
+      unknown
+    {% endif %}
+  next_fajr_time_spoken: >-
+    {% if next_fajr_ts not in [none, 'None', ''] %}
+      {{ (next_fajr_ts | float(0)) | timestamp_custom('%I:%M %p', true) | regex_replace('^0', '') }}
+    {% else %}
+      unknown
+    {% endif %}
+  fajr_remaining_text: >-
+    {% set minutes = (((fajr_end_ts | float(0)) - (fajr_ts | float(0))) / 60) | round(0) | int %}
+    {% set hours = minutes // 60 %}
+    {% set mins = minutes % 60 %}
+    {% if hours > 0 and mins > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }} and {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% elif hours > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }}
+    {% else %}
+      {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% endif %}
+  dhuhr_remaining_text: >-
+    {% set minutes = (((asr_ts | float(0)) - (dhuhr_ts | float(0))) / 60) | round(0) | int %}
+    {% set hours = minutes // 60 %}
+    {% set mins = minutes % 60 %}
+    {% if hours > 0 and mins > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }} and {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% elif hours > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }}
+    {% else %}
+      {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% endif %}
+  asr_remaining_text: >-
+    {% set minutes = (((maghrib_ts | float(0)) - (asr_ts | float(0))) / 60) | round(0) | int %}
+    {% set hours = minutes // 60 %}
+    {% set mins = minutes % 60 %}
+    {% if hours > 0 and mins > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }} and {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% elif hours > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }}
+    {% else %}
+      {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% endif %}
+  maghrib_remaining_text: >-
+    {% set minutes = (((isha_ts | float(0)) - (maghrib_ts | float(0))) / 60) | round(0) | int %}
+    {% set hours = minutes // 60 %}
+    {% set mins = minutes % 60 %}
+    {% if hours > 0 and mins > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }} and {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% elif hours > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }}
+    {% else %}
+      {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% endif %}
+  isha_remaining_text: >-
+    {% set minutes = (((isha_end_ts | float(0)) - (isha_ts | float(0))) / 60) | round(0) | int %}
+    {% set hours = minutes // 60 %}
+    {% set mins = minutes % 60 %}
+    {% if hours > 0 and mins > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }} and {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% elif hours > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }}
+    {% else %}
+      {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% endif %}
+  tahajjud_remaining_text: >-
+    {% set minutes = (((next_fajr_ts | float(0)) - (tahajjud_start_ts | float(0))) / 60) | round(0) | int %}
+    {% set hours = minutes // 60 %}
+    {% set mins = minutes % 60 %}
+    {% if hours > 0 and mins > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }} and {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% elif hours > 0 %}
+      {{ hours }} hour{{ 's' if hours != 1 else '' }}
+    {% else %}
+      {{ mins }} minute{{ 's' if mins != 1 else '' }}
+    {% endif %}
   tahajjud_start: >-
     {% set maghrib_s = states('sensor.islamic_prayer_times_maghrib_prayer') %}
     {% set midnight_s = states('sensor.islamic_prayer_times_midnight') %}
