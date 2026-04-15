@@ -8,6 +8,47 @@ This automation turns your family room speaker into a Westminster chime clock. E
 
 The automation fires every 15 minutes and plays a different audio file depending on how far through the current hour you are:
 
+## Pseudo Diagram
+
+```text
+Every 15 minutes
+  -> check active hours: between 07:00 and 22:00?
+     -> no: stop
+     -> yes:
+        -> set m = current minute
+        -> set h24 = current hour
+        -> set h12 = 12-hour version of h24
+        -> choose by minute
+           -> 15: play westminister_q1.mp3
+           -> 30: play westminister_q2.mp3
+           -> 45: play westminister_q3.mp3
+           -> 00:
+              -> play westminister_q4.mp3
+              -> wait 5 seconds
+              -> repeat h12 times
+                 -> play strike.mp3
+                 -> wait 3 seconds
+```
+
+## Mermaid Diagram
+
+```mermaid
+flowchart TD
+    A[Every 15 minutes trigger] --> B{Between 07:00 and 22:00?}
+    B -- No --> Z[Stop]
+    B -- Yes --> C[Set m, h24, h12, and base path]
+    C --> D{Minute value}
+
+    D -->|15| E[Play westminister_q1.mp3]
+    D -->|30| F[Play westminister_q2.mp3]
+    D -->|45| G[Play westminister_q3.mp3]
+    D -->|00| H[Play westminister_q4.mp3]
+    H --> I[Delay 5 seconds]
+    I --> J[Repeat h12 times]
+    J --> K[Play strike.mp3]
+    K --> L[Delay 3 seconds]
+```
+
 | Minute            | What Plays                                                 |
 | :---------------- | :--------------------------------------------------------- |
 | :15               | First quarter melody                                       |

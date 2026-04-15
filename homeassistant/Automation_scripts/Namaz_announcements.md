@@ -8,6 +8,51 @@ This automation announces Islamic prayer times through your family room speaker 
 
 Every minute, the automation checks whether the current time matches any of the tracked prayer-related times retrieved or derived from the Islamic Prayer Times integration. If there is a match, the speaker volume is set to the configured level and a spoken announcement is played.
 
+## Pseudo Diagram
+
+```text
+Every minute
+  -> compute now_hm and prayer-related times
+  -> is now_hm one of [fajr, fajr_end, dhuhr, asr, maghrib, isha, isha_end, tahajjud_start]?
+     -> no: stop
+     -> yes:
+        -> set speaker volume to 0.7
+        -> choose matching time
+           -> fajr: speak "It is time for Fajr prayer."
+           -> fajr_end: speak "Fajr time has ended."
+           -> dhuhr: speak "It is time for Dhuhr prayer."
+           -> asr: speak "It is time for Asr prayer."
+           -> maghrib: speak "It is time for Maghrib prayer."
+           -> isha:
+              -> speak "Maghrib time has ended."
+              -> wait 2 seconds
+              -> speak "It is time for Isha prayer."
+           -> isha_end: speak "Isha time has ended."
+           -> tahajjud_start: speak "Tahajjud time has started."
+```
+
+## Mermaid Diagram
+
+```mermaid
+flowchart TD
+    A[Every minute trigger] --> B[Compute now_hm and prayer-related times]
+    B --> C{now_hm matches tracked time?}
+    C -- No --> Z[Stop]
+    C -- Yes --> D[Set speaker volume to 0.7]
+    D --> E{Which time matched?}
+
+    E -->|fajr| F[Speak: It is time for Fajr prayer]
+    E -->|fajr_end| G[Speak: Fajr time has ended]
+    E -->|dhuhr| H[Speak: It is time for Dhuhr prayer]
+    E -->|asr| I[Speak: It is time for Asr prayer]
+    E -->|maghrib| J[Speak: It is time for Maghrib prayer]
+    E -->|isha| K[Speak: Maghrib time has ended]
+    K --> L[Delay 2 seconds]
+    L --> M[Speak: It is time for Isha prayer]
+    E -->|isha_end| N[Speak: Isha time has ended]
+    E -->|tahajjud_start| O[Speak: Tahajjud time has started]
+```
+
 The announcements include:
 
 - **Fajr** - pre-dawn prayer
